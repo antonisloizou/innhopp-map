@@ -76,7 +76,7 @@ function initialize() {
     { passive: true }
   );
 
-  map.addEventListener('click', (event) => {
+  map.addEventListener('pointerdown', (event) => {
     if (!state.activeId) return;
     const target = event.target;
     if (!(target instanceof Element)) return;
