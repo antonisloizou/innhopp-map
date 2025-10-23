@@ -3,7 +3,7 @@
     "id": "location-1",
     "title": "Location 1",
     "summary": "Description for location 1.",
-    "detailsHTML": "<p>More information about location 1. Tailor this HTML to describe the point of interest.</p>",
+    "detailsHTML": "<p>More information about location 1.</p>",
     "media": [
       {
         "type": "image",
@@ -22,7 +22,7 @@
     "id": "location-2",
     "title": "Location 2",
     "summary": "Description for location 2.",
-    "detailsHTML": "<p>More information about location 2. Tailor this HTML to describe the point of interest.</p>",
+    "detailsHTML": "<p>More information about location 2.</p>",
     "media": [
       {
         "type": "image",
@@ -41,7 +41,7 @@
     "id": "location-3",
     "title": "Location 3",
     "summary": "Description for location 3.",
-    "detailsHTML": "<p>More information about location 3. Tailor this HTML to describe the point of interest.</p>",
+    "detailsHTML": "<p>More information about location 3.</p>",
     "media": [
       {
         "type": "image",
@@ -60,7 +60,7 @@
     "id": "location-4",
     "title": "Location 4",
     "summary": "Description for location 4.",
-    "detailsHTML": "<p>More information about location 4. Tailor this HTML to describe the point of interest.</p>",
+    "detailsHTML": "<p>More information about location 4.</p>",
     "media": [
       {
         "type": "image",
@@ -79,7 +79,7 @@
     "id": "location-5",
     "title": "Location 5",
     "summary": "Description for location 5.",
-    "detailsHTML": "<p>More information about location 5. Tailor this HTML to describe the point of interest.</p>",
+    "detailsHTML": "<p>More information about location 5.</p>",
     "media": [
       {
         "type": "image",
