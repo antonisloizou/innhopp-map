@@ -207,7 +207,7 @@ body {
   color: inherit;
   display: grid;
   place-items: center;
-  font-size: 0.85rem;
+  font-size: calc(var(--atm-hotspot-size) * 0.85);
   font-weight: 600;
   cursor: pointer;
   pointer-events: auto;

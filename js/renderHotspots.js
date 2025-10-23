@@ -23,7 +23,7 @@ export function renderHotspots(container, events, options = {}) {
     button.setAttribute('tabindex', 0);
     button.setAttribute('aria-pressed', 'false');
     button.dataset.index = String(index);
-    button.textContent = event.icon ? iconToGlyph(event.icon) : index + 1;
+    button.textContent = '🪂';
 
     button.addEventListener('click', () => {
       options.onSelect?.(event.id, button);
@@ -78,21 +78,4 @@ export function renderHotspots(container, events, options = {}) {
     focus,
     getButton
   };
-}
-
-function iconToGlyph(value) {
-  switch (value) {
-    case 'info':
-      return 'ⓘ';
-    case 'spark':
-      return '✦';
-    case 'chip':
-      return '⌁';
-    case 'shield':
-      return '🛡';
-    case 'ai':
-      return '🤖';
-    default:
-      return '●';
-  }
 }
