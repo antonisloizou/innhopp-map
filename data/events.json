@@ -8,12 +8,12 @@
       {
         "type": "image",
         "src": "assets/location-1.jpg",
-        "alt": "Inlet detail"
+        "alt": "Picture for Location 1"
       }
     ],
     "x": 26.4,
     "y": 18.7,
-    "group": "Airframe",
+    "group": "Post landing dinner",
     "date": "2021-03-10",
     "color": "#0ea5e9",
     "icon": "info"
@@ -27,12 +27,12 @@
       {
         "type": "image",
         "src": "assets/location-2.jpg",
-        "alt": "Composite spar"
+        "alt": "Picture for Location 2"
       }
     ],
     "x": 62.1,
     "y": 40.2,
-    "group": "Structure",
+    "group": "on-site accomodation",
     "date": "2021-06-18",
     "color": "#f97316",
     "icon": "spark"
@@ -46,12 +46,12 @@
       {
         "type": "image",
         "src": "assets/location-3.jpg",
-        "alt": "Sensor overview"
+        "alt": "Picture for Location 3"
       }
     ],
     "x": 45.2,
     "y": 68.5,
-    "group": "Avionics",
+    "group": "never jumped before",
     "date": "2022-02-01",
     "color": "#22c55e",
     "icon": "chip"
@@ -65,12 +65,12 @@
       {
         "type": "image",
         "src": "assets/location-4.jpg",
-        "alt": "Thermal shield"
+        "alt": "Picture for Location 4"
       }
     ],
     "x": 80.5,
     "y": 22.9,
-    "group": "Materials",
+    "group": "after jump activity",
     "date": "2022-11-12",
     "color": "#e11d48",
     "icon": "shield"
@@ -84,12 +84,12 @@
       {
         "type": "image",
         "src": "assets/location-5.jpg",
-        "alt": "Autopilot"
+        "alt": "Picture for Location 5"
       }
     ],
     "x": 15.8,
     "y": 62.5,
-    "group": "Avionics",
+    "group": "never jumped before",
     "date": "2023-08-04",
     "color": "#8b5cf6",
     "icon": "ai"
