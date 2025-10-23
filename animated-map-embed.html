@@ -1,0 +1,394 @@
+<!-- AnimatedMap Squarespace Embed -->
+<!--
+Upload your assets via "Manage Custom Files" and copy their URLs.
+Set data-base and data-events on the container below to match the uploaded files.
+Include this entire snippet inside a Code Block or Footer Injection.
+If CDN access is restricted, upload panzoom.min.js and purify.min.js to Files and update the script src attributes to the /s/ URLs.
+For multiple maps on one page, duplicate the wrapper div with a unique id and call window.AnimatedMapEmbed(id) for each.
+-->
+<div id="animated-map" data-base="/s/map.jpg" data-events="/s/events.json"></div>
+<style>
+#animated-map { font-family: "Inter", system-ui, sans-serif; color: #f8fafc; background: radial-gradient(circle at top, #1e293b, #020617 55%); padding: 2rem 1.5rem 4rem; }
+#animated-map .atm-embed { max-width: min(1280px, 95vw); margin: 0 auto; display: grid; gap: clamp(1.5rem,4vw,3rem); }
+#animated-map .atm-header { display: grid; gap: .5rem; }
+#animated-map .atm-title { margin: 0; font-size: clamp(1.8rem,2.8vw,2.8rem); letter-spacing: -.02em; }
+#animated-map .atm-subtitle { margin: 0; color: #cbd5f5; max-width: 38ch; }
+#animated-map button:focus-visible { outline: 2px solid #38bdf8; outline-offset: 2px; }
+#animated-map .atm-map { position: relative; border-radius: 1.5rem; overflow: hidden; background: rgba(15,23,42,.55); backdrop-filter: blur(14px); box-shadow: 0 16px 40px rgba(15,23,42,.45); }
+#animated-map .atm-card-region { position: absolute; inset: 0; pointer-events: none; }
+#animated-map .atm-stage { position: relative; width: 100%; aspect-ratio: 16 / 9; overflow: hidden; }
+#animated-map .atm-stage img { width: 100%; height: 100%; object-fit: cover; display: block; user-select: none; }
+#animated-map .atm-hotspots { position: absolute; inset: 0; pointer-events: none; }
+#animated-map .atm-hotspot { position: absolute; width: clamp(1.75rem,1.5vw+1.4rem,2.5rem); height: clamp(1.75rem,1.5vw+1.4rem,2.5rem); border-radius: 50%; border: none; display: grid; place-items: center; font-size: .85rem; font-weight: 600; pointer-events: auto; background: radial-gradient(circle at center, rgba(255,255,255,.9), rgba(15,23,42,.8)); box-shadow: 0 0 0 0 rgba(56,189,248,.4); transition: box-shadow .18s ease, transform .18s ease; color: #38bdf8; }
+@media (prefers-reduced-motion: no-preference) { #animated-map .atm-hotspot::after { content: ""; position: absolute; inset: -10%; border-radius: inherit; border: 2px solid currentColor; opacity: .35; animation: atmEmbedPulse 2.4s ease-out infinite; } }
+#animated-map .atm-hotspot[data-active="true"], #animated-map .atm-hotspot:focus-visible { transform: translateY(-2px) scale(1.05); box-shadow: 0 12px 30px rgba(56,189,248,.4); z-index: 3; }
+#animated-map .atm-card { position: absolute; min-width: min(22rem,calc(100vw-2rem)); max-width: clamp(18rem,24vw,24rem); padding: 1.25rem; border-radius: 1.25rem; background: rgba(15,23,42,.95); border: 1px solid rgba(148,163,184,.4); box-shadow: 0 16px 40px rgba(15,23,42,.45); display: grid; gap: .75rem; z-index: 10; pointer-events: auto; }
+#animated-map .atm-card[data-docked="true"] { position: fixed; inset-inline: clamp(.75rem,5vw,3rem); bottom: clamp(.75rem,6vw,3rem); transform: none!important; max-width: none; width: calc(100% - clamp(1.5rem,10vw,6rem)); }
+#animated-map .atm-card header { display: grid; gap: .35rem; }
+#animated-map .atm-card-title { margin: 0; font-size: 1.25rem; letter-spacing: -.01em; }
+#animated-map .atm-card-summary { margin: 0; color: #cbd5f5; }
+#animated-map .atm-card button[data-close] { justify-self: end; border: none; background: transparent; color: inherit; font-size: 1.25rem; cursor: pointer; }
+#animated-map .atm-group-chip { display: inline-flex; align-items: center; gap: .4rem; padding: .15rem .65rem; border-radius: 999px; background: rgba(148,163,184,.2); border: 1px solid rgba(148,163,184,.35); font-size: .8rem; letter-spacing: .04em; text-transform: uppercase; }
+#animated-map .atm-group-chip::before { content: ""; width: .55rem; height: .55rem; border-radius: 50%; background: var(--chip-color,#38bdf8); box-shadow: 0 0 8px rgba(56,189,248,.4); }
+#animated-map .atm-media { display: grid; gap: .5rem; }
+#animated-map .atm-media img, #animated-map .atm-media video { width: 100%; border-radius: .85rem; border: 1px solid rgba(148,163,184,.3); max-height: 14rem; object-fit: cover; }
+#animated-map .atm-card footer { display: flex; justify-content: space-between; align-items: center; font-size: .85rem; color: #cbd5f5; }
+#animated-map [data-hidden="true"] { display: none!important; }
+#animated-map .atm-live { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+@keyframes atmEmbedPulse { 0% { transform: scale(1); opacity: .6; } 70% { transform: scale(1.25); opacity: 0; } 100% { transform: scale(1.4); opacity: 0; } }
+@media (max-width: 768px) { #animated-map .atm-card { max-width: min(28rem,100%); } }
+</style>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/panzoom@9.4.3/dist/panzoom.min.js"></script>
+<script>
+(function(){
+  const registry = new Map();
+  function fetchJSON(url){
+    return fetch(url).then((res)=>{
+      if(!res.ok) throw new Error('Failed to fetch '+url);
+      return res.json();
+    });
+  }
+  function formatDate(value){
+    if(!value) return '';
+    const date = new Date(value);
+    return Number.isNaN(date.getTime()) ? value : date.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+  }
+  function announce(el,msg){
+    if(!el) return;
+    el.textContent='';
+    requestAnimationFrame(()=>{ el.textContent=msg; });
+  }
+  function trapFocus(node){
+    const selectors=['a[href]','button:not([disabled])','[tabindex]:not([tabindex="-1"])'];
+    function getList(){
+      return Array.from(node.querySelectorAll(selectors.join(','))).filter((el)=>el.offsetParent!==null);
+    }
+    function onKey(e){
+      if(e.key!=='Tab') return;
+      const focusable=getList();
+      if(!focusable.length){ e.preventDefault(); return; }
+      const first=focusable[0];
+      const last=focusable[focusable.length-1];
+      if(e.shiftKey && document.activeElement===first){
+        e.preventDefault();
+        last.focus();
+      } else if(!e.shiftKey && document.activeElement===last){
+        e.preventDefault();
+        first.focus();
+      }
+    }
+    node.addEventListener('keydown',onKey);
+    return ()=>node.removeEventListener('keydown',onKey);
+  }
+  function renderHotspots(container, events, onSelect){
+    container.innerHTML='';
+    const map=new Map();
+    events.forEach((evt,idx)=>{
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='atm-hotspot';
+      btn.dataset.eventId=evt.id;
+      btn.style.left=Math.max(0,Math.min(100,evt.x))+'%';
+      btn.style.top=Math.max(0,Math.min(100,evt.y))+'%';
+      btn.style.transform='translate(-50%,-50%)';
+      btn.style.color=evt.color||'#38bdf8';
+      btn.setAttribute('aria-label',evt.title+'. '+evt.summary);
+      btn.setAttribute('aria-pressed','false');
+      btn.textContent=evt.icon?icon(evt.icon):idx+1;
+      btn.addEventListener('click',()=>onSelect(evt.id,btn));
+      btn.addEventListener('keydown',(e)=>{
+        if(e.key==='Enter' || e.key===' '){
+          e.preventDefault();
+          onSelect(evt.id,btn);
+        }
+      });
+      container.appendChild(btn);
+      map.set(evt.id,btn);
+    });
+    function icon(name){
+      switch(name){
+        case 'info': return 'ⓘ';
+        case 'spark': return '✦';
+        case 'chip': return '⌁';
+        case 'shield': return '🛡';
+        case 'ai': return '🤖';
+        default: return '●';
+      }
+    }
+    return {
+      setActive(id){
+        map.forEach((btn,key)=>{
+          const active=key===id;
+          btn.dataset.active=active?'true':'false';
+          btn.setAttribute('aria-pressed',active?'true':'false');
+        });
+      },
+      getButton(id){
+        return map.get(id)||null;
+      }
+    };
+  }
+  function createCard(region,onClose){
+    let active=null;
+    let anchor=null;
+    let cleanup=null;
+    const card=document.createElement('article');
+    card.className='atm-card';
+    card.hidden=true;
+    card.setAttribute('role','dialog');
+    card.setAttribute('aria-modal','false');
+    const close=document.createElement('button');
+    close.type='button';
+    close.dataset.close='';
+    close.innerHTML='&times;';
+    close.setAttribute('aria-label','Close details');
+    const header=document.createElement('header');
+    const title=document.createElement('h2');
+    title.className='atm-card-title';
+    title.id='atm-card-title';
+    const summary=document.createElement('p');
+    summary.className='atm-card-summary';
+    const media=document.createElement('div');
+    media.className='atm-media';
+    const details=document.createElement('div');
+    details.className='atm-card-details';
+    const footer=document.createElement('footer');
+    const group=document.createElement('span');
+    group.className='atm-group-chip';
+    const date=document.createElement('time');
+    header.append(close,title,summary);
+    footer.append(group,date);
+    card.append(header,media,details,footer);
+    region.appendChild(card);
+    close.addEventListener('click',()=>closeCard());
+    document.addEventListener('keydown',(e)=>{
+      if(e.key==='Escape' && active){
+        e.stopPropagation();
+        closeCard();
+      }
+    });
+    function open(evt,origin){
+      active=evt.id;
+      anchor=origin||null;
+      card.hidden=false;
+      card.dataset.docked=shouldDock()?'true':'false';
+      card.setAttribute('aria-labelledby',title.id);
+      title.textContent=evt.title;
+      summary.textContent=evt.summary;
+      group.textContent=evt.group;
+      group.style.setProperty('--chip-color',evt.color||'#38bdf8');
+      date.textContent=formatDate(evt.date);
+      date.dateTime=evt.date||'';
+      media.innerHTML='';
+      (evt.media||[]).forEach((item)=>{
+        const node=createMedia(item);
+        if(node) media.appendChild(node);
+      });
+      media.hidden=!media.childElementCount;
+      details.innerHTML='';
+      details.innerHTML=window.DOMPurify?window.DOMPurify.sanitize(evt.detailsHTML,{USE_PROFILES:{html:true}}):evt.detailsHTML;
+      requestAnimationFrame(()=>{
+        positionCard(card,anchor);
+        const first=card.querySelector('button, a, [tabindex]:not([tabindex="-1"])');
+        first?.focus({preventScroll:true});
+        cleanup?.();
+        cleanup=trapFocus(card);
+      });
+    }
+    function closeCard(){
+      if(!active) return;
+      active=null;
+      anchor=null;
+      card.hidden=true;
+      cleanup?.();
+      cleanup=null;
+      onClose&&onClose();
+    }
+    function shouldDock(){
+      return window.matchMedia('(max-width: 900px)').matches;
+    }
+    function reposition(){
+      if(!active) return;
+      card.dataset.docked=shouldDock()?'true':'false';
+      positionCard(card,card.dataset.docked==='true'?null:anchor);
+    }
+    return { element:card, open, close:closeCard, getCurrent:()=>active, reposition };
+    function createMedia(media){
+      if(!media || !media.src) return null;
+      if(media.type==='video'){
+        const video=document.createElement('video');
+        video.controls=true;
+        video.preload='metadata';
+        video.innerHTML='<source src="'+media.src+'" type="video/mp4" />';
+        if(media.alt) video.setAttribute('aria-label',media.alt);
+        return video;
+      }
+      const img=document.createElement('img');
+      img.src=media.src;
+      img.alt=media.alt||'';
+      img.loading='lazy';
+      return img;
+    }
+    function positionCard(cardEl,origin){
+      if(!origin || cardEl.dataset.docked==='true'){
+        cardEl.style.left='auto';
+        cardEl.style.top='auto';
+        return;
+      }
+      const rect=origin.getBoundingClientRect();
+      const cardRect=cardEl.getBoundingClientRect();
+      const vw=window.innerWidth;
+      const vh=window.innerHeight;
+      let left=rect.left+rect.width/2-cardRect.width/2;
+      let top=rect.top-cardRect.height-16;
+      if(top<16) top=rect.bottom+16;
+      if(left<16) left=16; else if(left+cardRect.width>vw-16) left=vw-cardRect.width-16;
+      if(top+cardRect.height>vh-16) top=vh-cardRect.height-16;
+      cardEl.style.left=Math.round(left)+'px';
+      cardEl.style.top=Math.round(top)+'px';
+    }
+  }
+  function initPanzoom(stage){
+    if(!window.Panzoom) throw new Error('Panzoom is required');
+    const instance=window.Panzoom(stage,{contain:'outside',maxScale:5,minScale:.5,step:.18,setTransform:(elem,{scale,x,y})=>{
+      elem.style.transform='translate('+x+'px,'+y+'px) scale('+scale+')';
+    }});
+    const parent=stage.parentElement;
+    parent&&parent.addEventListener('wheel',(event)=>{
+      if(!event.ctrlKey) event.preventDefault();
+      instance.zoomWithWheel(event);
+    },{passive:false});
+    return {
+      fitToScreen(){
+        const container=parent||stage;
+        const img=stage.querySelector('img');
+        if(!(img instanceof HTMLImageElement)) return;
+        const rect=container.getBoundingClientRect();
+        const naturalWidth=img.naturalWidth||rect.width;
+        const naturalHeight=img.naturalHeight||rect.height;
+        const scale=Math.min(rect.width/naturalWidth,rect.height/naturalHeight);
+        if(!Number.isFinite(scale) || scale<=0) return;
+        instance.zoomToPoint(scale,{clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2});
+        instance.moveTo(0,0);
+      }
+    };
+  }
+  function init(host){
+    if(!host || registry.has(host)) return;
+    const base=host.dataset.base;
+    const dataUrl=host.dataset.events;
+    host.innerHTML='<div class="atm-embed"><header class="atm-header"><h2 class="atm-title">Animated Map</h2><p class="atm-subtitle">Explore the interactive planform.</p></header><div class="atm-map"><div class="atm-stage"><img alt="Map base" loading="lazy"></div><div class="atm-hotspots"></div><div class="atm-card-region"></div></div><div class="atm-live" aria-live="polite" aria-atomic="true"></div></div>';
+    const img=host.querySelector('img');
+    if(img && base) img.src=base;
+    const stage=host.querySelector('.atm-stage');
+    const hotspotLayer=host.querySelector('.atm-hotspots');
+    const cardRegion=host.querySelector('.atm-card-region');
+    const live=host.querySelector('.atm-live');
+    const card=createCard(cardRegion,()=>{ state.active=null; setParam(''); });
+    const pan=initPanzoom(stage);
+    let hotspots=null;
+    const state={ events:[], ordered:[], visible:[], active:null };
+    fetchJSON(dataUrl).then((data)=>{
+      state.events=Array.isArray(data)?data:[];
+      state.ordered=[...state.events].sort((a,b)=>new Date(a.date)-new Date(b.date));
+      state.visible=state.ordered.slice();
+      hotspots=renderHotspots(hotspotLayer,state.ordered,(id,origin)=>select(id,{origin}));
+      registry.set(host,{ select:(id)=>select(id,{ scrollIntoView:true }) });
+      if(img){
+        if(img.complete){
+          pan.fitToScreen();
+        } else {
+          img.addEventListener('load',()=>pan.fitToScreen(),{once:true});
+        }
+      }
+      const deep=getParam();
+      const initial=state.ordered.find((e)=>e.id===deep) || state.visible[0];
+      if(initial){
+        select(initial.id);
+      } else {
+        announce(live,'No locations available.');
+      }
+    }).catch((error)=>{
+      console.error(error);
+      announce(live,'Failed to load map data');
+    });
+    stage.addEventListener('panzoomchange',()=>card.reposition(),{passive:true});
+    window.addEventListener('resize',()=>card.reposition(),{passive:true});
+    document.addEventListener('keydown',(event)=>{
+      if(!state.active) return;
+      if(event.key==='ArrowRight' || event.key==='ArrowDown'){
+        event.preventDefault();
+        const next=adjacent(1);
+        if(next) select(next.id,{ focusHotspot:true });
+      } else if(event.key==='ArrowLeft' || event.key==='ArrowUp'){
+        event.preventDefault();
+        const prev=adjacent(-1);
+        if(prev) select(prev.id,{ focusHotspot:true });
+      } else if(event.key==='Escape'){
+        const current=state.active;
+        card.close();
+        if(current && hotspots){
+          const btn=hotspots.getButton(current);
+          btn?.focus({preventScroll:true});
+        }
+      }
+    });
+    window.addEventListener('popstate',()=>{
+      const target=getParam();
+      if(target && target!==state.active){
+        select(target,{ scrollIntoView:true });
+      }
+    });
+    function select(id,options={}){
+      const data=state.ordered.find((evt)=>evt.id===id);
+      if(!data) return;
+      state.active=id;
+      hotspots?.setActive(id);
+      const origin=options.origin || hotspots?.getButton(id) || null;
+      card.open(data,origin);
+      setParam(id);
+      announce(live,data.title+'. '+data.summary);
+      if(options.focusHotspot && origin){
+        origin.focus({preventScroll:true});
+      }
+      if(options.scrollIntoView && origin){
+        origin.scrollIntoView({ behavior:'smooth', block:'center', inline:'center' });
+      }
+    }
+    function adjacent(step){
+      const list=state.visible;
+      if(!list.length || !state.active) return null;
+      const index=list.findIndex((evt)=>evt.id===state.active);
+      if(index===-1) return list[0];
+      const nextIndex=(index+step+list.length)%list.length;
+      return list[nextIndex];
+    }
+    function getParam(){
+      return new URLSearchParams(window.location.search).get('event');
+    }
+    function setParam(value){
+      const url=new URL(window.location.href);
+      if(value){
+        url.searchParams.set('event',value);
+      } else {
+        url.searchParams.delete('event');
+      }
+      history.replaceState({},'',url.pathname+url.search+url.hash);
+    }
+  }
+  function bootstrap(){
+    const host=document.getElementById('animated-map');
+    if(host) init(host);
+  }
+  window.AnimatedMapEmbed=function(id){
+    const el=document.getElementById(id);
+    if(el) init(el);
+  };
+  if(document.readyState==='loading'){
+    document.addEventListener('DOMContentLoaded',bootstrap);
+  } else {
+    bootstrap();
+  }
+})();
+</script>

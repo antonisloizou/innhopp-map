@@ -1,0 +1,41 @@
+<!--
+AnimatedMap — data-driven interactive image map inspired by bgd-example.
+Usage: Edit /data/events.json and /assets/map.jpg to create new maps.
+Includes a Squarespace-ready embed snippet (animated-map-embed.html).
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Animated Map</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/panzoom@9.4.3/dist/panzoom.min.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#atm-map" aria-label="Skip to map">Skip to map</a>
+    <div class="atm-app">
+      <header class="atm-header">
+        <h1 class="atm-title">Animated Map</h1>
+        <p class="atm-subtitle">Explore innovations on the prototype airframe.</p>
+      </header>
+      <main class="atm-main" id="atm-map">
+        <div class="atm-map" data-map>
+          <div class="atm-map-stage" data-stage>
+            <img
+              id="atm-base-image"
+              src="assets/map.jpg"
+              alt="Prototype airframe base"
+              loading="lazy"
+            />
+            <div class="atm-hotspots" data-hotspots></div>
+          </div>
+          <div class="atm-card-region" data-card-region></div>
+        </div>
+      </main>
+      <div class="atm-live" aria-live="polite" aria-atomic="true" data-live></div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
