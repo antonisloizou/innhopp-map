@@ -121,6 +121,17 @@ export function createInfoCard(region, options = {}) {
 
   document.addEventListener('keydown', handleKeyDown);
 
+  function handlePointerDown(event) {
+    if (!currentId) return;
+    const target = event.target;
+    if (!(target instanceof Node)) return;
+    if (card.contains(target)) return;
+    if (target instanceof Element && target.closest('.atm-hotspot')) return;
+    close();
+  }
+
+  document.addEventListener('pointerdown', handlePointerDown);
+
   function reposition() {
     if (!currentId) return;
     card.dataset.docked = shouldDock() ? 'true' : 'false';
