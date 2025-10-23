@@ -11,6 +11,7 @@
   --atm-toolbar-gap: clamp(0.5rem, 1.5vw, 1rem);
   --atm-toolbar-bg: rgba(15, 23, 42, 0.75);
   --atm-shadow: 0 16px 40px rgba(15, 23, 42, 0.45);
+  --atm-map-aspect: 1.7777778;
 }
 
 * {
@@ -180,7 +181,7 @@ body {
 .atm-map-stage {
   position: relative;
   width: 100%;
-  aspect-ratio: 16 / 9;
+  aspect-ratio: var(--atm-map-aspect, 16 / 9);
   overflow: hidden;
 }
 
@@ -196,6 +197,30 @@ body {
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+@media (orientation: portrait) {
+  .atm-app {
+    --atm-portrait-padding: clamp(0.75rem, 3vh, 1.25rem);
+    padding-block: var(--atm-portrait-padding);
+  }
+
+  .atm-map {
+    height: calc(100dvh - (var(--atm-portrait-padding, 0px) * 2));
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .atm-map-stage {
+    height: 100%;
+    width: auto;
+  }
+
+  .atm-map-stage img {
+    height: 100%;
+    width: auto;
+  }
 }
 
 .atm-hotspot {
@@ -272,21 +297,20 @@ body {
   display: none !important;
 }
 
-.atm-card[data-docked="true"] {
-  --atm-docked-inline: clamp(0.75rem, 5vw, 3rem);
-  --atm-docked-block: clamp(0.75rem, 6vw, 3rem);
-  --atm-docked-viewport: 100vh;
-  position: fixed;
-  inset-inline: var(--atm-docked-inline);
-  bottom: var(--atm-docked-block);
-  transform: none !important;
-  max-width: none;
-  width: calc(100% - (var(--atm-docked-inline) * 2));
-  max-height: calc(var(--atm-docked-viewport) - (var(--atm-docked-block) * 2));
-  overflow: auto;
-  overscroll-behavior: contain;
-  -webkit-overflow-scrolling: touch;
-}
+  .atm-card[data-docked="true"] {
+    --atm-docked-inline: clamp(0.75rem, 5vw, 3rem);
+    --atm-docked-block: clamp(0.75rem, 6vw, 3rem);
+    --atm-docked-viewport: 100vh;
+    position: fixed;
+    inset-inline: var(--atm-docked-inline);
+    bottom: var(--atm-docked-block);
+    transform: none !important;
+    width: min(calc(100% - (var(--atm-docked-inline) * 2)), 80vw);
+    max-height: calc(var(--atm-docked-viewport) - (var(--atm-docked-block) * 2));
+    overflow: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+  }
 
 @supports (height: 100dvh) {
   .atm-card[data-docked="true"] {

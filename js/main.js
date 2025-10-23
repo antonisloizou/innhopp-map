@@ -1,4 +1,4 @@
-import { fetchJSON, getQueryParam, setQueryParam, sortByDate, announce, prefersReducedMotion } from './utils.js';
+import { fetchJSON, getQueryParam, setQueryParam, sortByDate, announce, prefersReducedMotion, clamp } from './utils.js';
 import { renderHotspots } from './renderHotspots.js';
 import { createInfoCard } from './infoCard.js';
 import { initPanzoom } from './panzoom.js';
@@ -61,10 +61,15 @@ function initialize() {
   }
 
   if (baseImage instanceof HTMLImageElement) {
-    if (baseImage.complete) {
+    const handleBaseImageReady = () => {
+      applyBaseImageMetrics(baseImage);
       panzoom.fitToScreen();
+    };
+
+    if (baseImage.complete) {
+      handleBaseImageReady();
     } else {
-      baseImage.addEventListener('load', () => panzoom.fitToScreen(), { once: true });
+      baseImage.addEventListener('load', handleBaseImageReady, { once: true });
     }
   }
 
@@ -130,8 +135,28 @@ function initialize() {
       originButton.focus({ preventScroll: true });
     }
 
-    if (options.scrollIntoView && originButton) {
-      originButton.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+    if (originButton) {
+      const mapElement = map instanceof HTMLElement ? map : null;
+      if (!mapElement) return;
+      const hasHorizontalOverflow = mapElement.scrollWidth > mapElement.clientWidth + 1;
+      if (!options.scrollIntoView && !hasHorizontalOverflow) {
+        return;
+      }
+
+      const behavior = prefersReducedMotion() ? 'auto' : 'smooth';
+      const cardElement = infoCard.element;
+      if (cardElement?.dataset.docked === 'true' && hasHorizontalOverflow) {
+        requestAnimationFrame(() => {
+          adjustHotspotForDockedCard({
+            mapElement,
+            button: originButton,
+            cardElement,
+            behavior
+          });
+        });
+      } else {
+        originButton.scrollIntoView({ behavior, block: 'center', inline: 'center' });
+      }
     }
   }
 
@@ -142,5 +167,49 @@ function initialize() {
     if (index === -1) return list[0];
     const nextIndex = (index + direction + list.length) % list.length;
     return list[nextIndex];
+  }
+
+  function applyBaseImageMetrics(img) {
+    const naturalWidth = img.naturalWidth;
+    const naturalHeight = img.naturalHeight;
+    if (!naturalWidth || !naturalHeight) return;
+    map?.style.setProperty('--atm-map-aspect', String(naturalWidth / naturalHeight));
+  }
+
+  function adjustHotspotForDockedCard({ mapElement, button, cardElement, behavior }) {
+    const scrollableRange = Math.max(mapElement.scrollWidth - mapElement.clientWidth, 0);
+    if (scrollableRange <= 0) {
+      button.scrollIntoView({ behavior, block: 'center', inline: 'center' });
+      return;
+    }
+
+    const mapRect = mapElement.getBoundingClientRect();
+    const buttonRect = button.getBoundingClientRect();
+    const cardRect = cardElement.getBoundingClientRect();
+
+    const buttonCenterWithinMap = buttonRect.left - mapRect.left + buttonRect.width / 2;
+    const buttonCenterAbsolute = mapElement.scrollLeft + buttonCenterWithinMap;
+
+    const intersectsHorizontally =
+      cardRect.left < mapRect.right && cardRect.right > mapRect.left;
+    const intersectsVertically =
+      cardRect.top < mapRect.bottom && cardRect.bottom > mapRect.top;
+
+    let targetCenter = mapRect.width / 2;
+    if (intersectsHorizontally && intersectsVertically) {
+      const leftFree = Math.max(0, Math.min(cardRect.left, mapRect.right) - mapRect.left);
+      const effectiveWidth = Math.max(leftFree, mapRect.width * 0.2);
+      targetCenter = effectiveWidth / 2;
+    }
+
+    const desiredScrollLeft = clamp(
+      buttonCenterAbsolute - targetCenter,
+      0,
+      scrollableRange
+    );
+
+    if (Math.abs(desiredScrollLeft - mapElement.scrollLeft) > 1) {
+      mapElement.scrollTo({ left: desiredScrollLeft, behavior });
+    }
   }
 }
