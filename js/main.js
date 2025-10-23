@@ -76,6 +76,15 @@ function initialize() {
     { passive: true }
   );
 
+  map.addEventListener('click', (event) => {
+    if (!state.activeId) return;
+    const target = event.target;
+    if (target instanceof HTMLElement && (target.closest('.atm-hotspot') || target.closest('.atm-card'))) {
+      return;
+    }
+    infoCard.close();
+  });
+
   window.addEventListener(
     'resize',
     () => {

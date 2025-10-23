@@ -155,27 +155,29 @@ function positionCard(card, origin) {
     return;
   }
 
+  const region = card.parentElement;
+  if (!(region instanceof HTMLElement)) {
+    return;
+  }
+
+  const padding = 16;
   const originRect = origin.getBoundingClientRect();
-  const cardRect = card.getBoundingClientRect();
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  const regionRect = region.getBoundingClientRect();
+  const cardWidth = card.offsetWidth;
+  const cardHeight = card.offsetHeight;
 
-  let left = originRect.left + originRect.width / 2 - cardRect.width / 2;
-  let top = originRect.top - cardRect.height - 16;
+  let left = originRect.left + originRect.width / 2 - cardWidth / 2 - regionRect.left;
+  let top = originRect.top - cardHeight - padding - regionRect.top;
 
-  if (top < 16) {
-    top = originRect.bottom + 16;
+  if (top < padding) {
+    top = originRect.bottom + padding - regionRect.top;
   }
 
-  if (left < 16) {
-    left = 16;
-  } else if (left + cardRect.width > viewportWidth - 16) {
-    left = viewportWidth - cardRect.width - 16;
-  }
+  const maxLeft = Math.max(padding, regionRect.width - cardWidth - padding);
+  const maxTop = Math.max(padding, regionRect.height - cardHeight - padding);
 
-  if (top + cardRect.height > viewportHeight - 16) {
-    top = viewportHeight - cardRect.height - 16;
-  }
+  left = Math.min(Math.max(left, padding), maxLeft);
+  top = Math.min(Math.max(top, padding), maxTop);
 
   card.style.left = `${Math.round(left)}px`;
   card.style.top = `${Math.round(top)}px`;
