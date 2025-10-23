@@ -3,7 +3,7 @@ import { formatDate, trapFocus } from './utils.js';
 /**
  * Create an info card controller attached to the card region.
  * @param {HTMLElement} region
- * @param {{ onClose?: () => void }} options
+ * @param {{ onClose?: (payload: { id: string; origin: HTMLElement | null }) => void }} options
  */
 export function createInfoCard(region, options = {}) {
   let currentId = null;
@@ -91,12 +91,14 @@ export function createInfoCard(region, options = {}) {
 
   function close() {
     if (currentId === null) return;
+    const closedId = currentId;
+    const origin = anchorButton;
     currentId = null;
     card.hidden = true;
     anchorButton = null;
     cleanupFocusTrap?.();
     cleanupFocusTrap = null;
-    options.onClose?.();
+    options.onClose?.({ id: closedId, origin });
   }
 
   function shouldDock() {

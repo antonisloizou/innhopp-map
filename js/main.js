@@ -40,9 +40,12 @@ function initialize() {
     onSelect: (eventId, origin) => selectEvent(eventId, { origin })
   });
   const infoCard = createInfoCard(cardRegion, {
-    onClose: () => {
+    onClose: ({ id, origin } = {}) => {
       state.activeId = null;
+      hotspots.setActive(null);
       setQueryParam('event', '');
+      const target = origin ?? (id ? hotspots.getButton(id) : null);
+      target?.focus({ preventScroll: true });
     }
   });
   const panzoom = initPanzoom(stage);
@@ -50,9 +53,11 @@ function initialize() {
   app.dataset.prefersMotion = prefersReducedMotion() ? 'false' : 'true';
 
   const urlEvent = getQueryParam('event');
-  const initialEvent = state.ordered.find((event) => event.id === urlEvent) ?? state.visible[0];
-  if (initialEvent) {
-    selectEvent(initialEvent.id);
+  if (urlEvent) {
+    const initialEvent = state.ordered.find((event) => event.id === urlEvent);
+    if (initialEvent) {
+      selectEvent(initialEvent.id, { scrollIntoView: true });
+    }
   }
 
   if (baseImage instanceof HTMLImageElement) {
@@ -90,12 +95,7 @@ function initialize() {
       const prev = getAdjacentEvent(-1);
       if (prev) selectEvent(prev.id, { focusHotspot: true });
     } else if (event.key === 'Escape') {
-      const currentId = state.activeId;
       infoCard.close();
-      if (currentId) {
-        const button = hotspots.getButton(currentId);
-        button?.focus({ preventScroll: true });
-      }
     }
   });
 
