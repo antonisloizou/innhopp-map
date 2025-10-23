@@ -3,7 +3,7 @@ import { formatDate, trapFocus } from './utils.js';
 /**
  * Create an info card controller attached to the card region.
  * @param {HTMLElement} region
- * @param {{ onClose?: () => void }} options
+ * @param {{ onClose?: (payload: { id: string; origin: HTMLElement | null }) => void }} options
  */
 export function createInfoCard(region, options = {}) {
   let currentId = null;
@@ -12,6 +12,7 @@ export function createInfoCard(region, options = {}) {
   const card = document.createElement('article');
   card.className = 'atm-card';
   card.hidden = true;
+  card.setAttribute('aria-hidden', 'true');
   card.setAttribute('role', 'dialog');
   card.setAttribute('aria-modal', 'false');
   card.dataset.docked = 'false';
@@ -50,6 +51,7 @@ export function createInfoCard(region, options = {}) {
   function open(event, origin) {
     currentId = event.id;
     card.hidden = false;
+    card.setAttribute('aria-hidden', 'false');
     card.dataset.docked = shouldDock() ? 'true' : 'false';
     anchorButton = origin || null;
     card.setAttribute('aria-labelledby', title.id);
@@ -91,12 +93,15 @@ export function createInfoCard(region, options = {}) {
 
   function close() {
     if (currentId === null) return;
+    const closedId = currentId;
+    const origin = anchorButton;
     currentId = null;
     card.hidden = true;
+    card.setAttribute('aria-hidden', 'true');
     anchorButton = null;
     cleanupFocusTrap?.();
     cleanupFocusTrap = null;
-    options.onClose?.();
+    options.onClose?.({ id: closedId, origin });
   }
 
   function shouldDock() {
