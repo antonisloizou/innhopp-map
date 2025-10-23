@@ -273,11 +273,31 @@ body {
 }
 
 .atm-card[data-docked="true"] {
+  --atm-docked-inline: clamp(0.75rem, 5vw, 3rem);
+  --atm-docked-block: clamp(0.75rem, 6vw, 3rem);
+  --atm-docked-viewport: 100vh;
   position: fixed;
-  inset-inline: clamp(0.75rem, 5vw, 3rem);
-  bottom: clamp(0.75rem, 6vw, 3rem);
+  inset-inline: var(--atm-docked-inline);
+  bottom: var(--atm-docked-block);
   transform: none !important;
   max-width: none;
+  width: calc(100% - (var(--atm-docked-inline) * 2));
+  max-height: calc(var(--atm-docked-viewport) - (var(--atm-docked-block) * 2));
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+@supports (height: 100dvh) {
+  .atm-card[data-docked="true"] {
+    --atm-docked-viewport: 100dvh;
+  }
+}
+
+@supports (height: 100svh) {
+  .atm-card[data-docked="true"] {
+    --atm-docked-viewport: 100svh;
+  }
   width: calc(100% - clamp(1.5rem, 10vw, 6rem));
   max-height: calc(100dvh - (clamp(0.75rem, 6vw, 3rem) * 2));
   overflow: auto;
