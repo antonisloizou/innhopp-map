@@ -279,6 +279,10 @@ body {
   transform: none !important;
   max-width: none;
   width: calc(100% - clamp(1.5rem, 10vw, 6rem));
+  max-height: calc(100dvh - (clamp(0.75rem, 6vw, 3rem) * 2));
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 @media (max-width: 768px) {

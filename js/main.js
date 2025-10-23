@@ -80,7 +80,6 @@ function initialize() {
     if (!state.activeId) return;
     const target = event.target;
     if (!(target instanceof Element)) return;
-    if (!map.contains(target)) return;
     if (target.closest('.atm-hotspot') || target.closest('.atm-card')) {
       return;
     }
