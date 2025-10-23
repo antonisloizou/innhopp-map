@@ -1,0 +1,63 @@
+<!--
+AnimatedMap — data-driven interactive image map inspired by bgd-example.
+Usage: Edit /data/events.json and /assets/map.jpg to create new maps.
+Includes a Squarespace-ready embed snippet (animated-map-embed.html).
+-->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Animated Map</title>
+    <link rel="stylesheet" href="styles/main.css" />
+    <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/panzoom@9.4.3/dist/panzoom.min.js" defer></script>
+  </head>
+  <body>
+    <a class="skip-link" href="#atm-map" aria-label="Skip to map">Skip to map</a>
+    <div class="atm-app" data-prefers-motion="true">
+      <header class="atm-header">
+        <h1 class="atm-title">Animated Map</h1>
+        <p class="atm-subtitle">Explore innovations on the prototype airframe.</p>
+      </header>
+      <section class="atm-toolbar" role="toolbar" aria-label="Map controls">
+        <div class="atm-field">
+          <label for="atm-search">Search</label>
+          <input id="atm-search" name="search" type="search" placeholder="Search events" autocomplete="off" />
+        </div>
+        <div class="atm-field">
+          <label for="atm-filter">Group</label>
+          <select id="atm-filter" name="group">
+            <option value="all">All groups</option>
+          </select>
+        </div>
+        <div class="atm-field atm-timeline" role="group" aria-label="Timeline controls">
+          <button type="button" class="atm-btn" data-action="prev" aria-label="Previous event">◀</button>
+          <button type="button" class="atm-btn" data-action="play" aria-pressed="false" aria-label="Play timeline">▶</button>
+          <button type="button" class="atm-btn" data-action="next" aria-label="Next event">▶</button>
+        </div>
+        <div class="atm-field atm-zoom-group" role="group" aria-label="View controls">
+          <button type="button" class="atm-btn" data-action="reset" aria-label="Reset view">Reset</button>
+          <button type="button" class="atm-btn" data-action="fit" aria-label="Fit to screen">Fit</button>
+          <output id="atm-zoom-indicator" role="status" aria-live="polite">100%</output>
+        </div>
+      </section>
+      <main class="atm-main" id="atm-map">
+        <div class="atm-map" data-map>
+          <div class="atm-map-stage" data-stage>
+            <img
+              id="atm-base-image"
+              src="assets/map.jpg"
+              alt="Prototype airframe base"
+              loading="lazy"
+            />
+            <div class="atm-hotspots" data-hotspots></div>
+          </div>
+          <div class="atm-card-region" data-card-region></div>
+        </div>
+      </main>
+      <div class="atm-live" aria-live="polite" aria-atomic="true" data-live></div>
+    </div>
+    <script type="module" src="js/main.js"></script>
+  </body>
+</html>
