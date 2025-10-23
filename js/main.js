@@ -76,10 +76,12 @@ function initialize() {
     { passive: true }
   );
 
-  map.addEventListener('click', (event) => {
+  map.addEventListener('pointerdown', (event) => {
     if (!state.activeId) return;
     const target = event.target;
-    if (target instanceof HTMLElement && (target.closest('.atm-hotspot') || target.closest('.atm-card'))) {
+    if (!(target instanceof Element)) return;
+    if (!map.contains(target)) return;
+    if (target.closest('.atm-hotspot') || target.closest('.atm-card')) {
       return;
     }
     infoCard.close();
