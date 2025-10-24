@@ -1,7 +1,6 @@
 import { fetchJSON, getQueryParam, setQueryParam, sortByDate, announce, prefersReducedMotion, clamp } from './utils.js';
 import { renderHotspots } from './renderHotspots.js';
 import { createInfoCard } from './infoCard.js';
-import { initPanzoom } from './panzoom.js';
 
 const app = document.querySelector('.atm-app');
 const map = document.querySelector('[data-map]');
@@ -40,6 +39,7 @@ function initialize() {
     onSelect: (eventId, origin) => selectEvent(eventId, { origin })
   });
   const infoCard = createInfoCard(cardRegion, {
+    mapElement: map,
     onClose: ({ id, origin } = {}) => {
       state.activeId = null;
       hotspots.setActive(null);
@@ -48,8 +48,6 @@ function initialize() {
       target?.focus({ preventScroll: true });
     }
   });
-  const panzoom = initPanzoom(stage);
-
   app.dataset.prefersMotion = prefersReducedMotion() ? 'false' : 'true';
 
   const urlEvent = getQueryParam('event');
@@ -63,7 +61,7 @@ function initialize() {
   if (baseImage instanceof HTMLImageElement) {
     const handleBaseImageReady = () => {
       applyBaseImageMetrics(baseImage);
-      panzoom.fitToScreen();
+      infoCard.reposition();
     };
 
     if (baseImage.complete) {
@@ -72,14 +70,6 @@ function initialize() {
       baseImage.addEventListener('load', handleBaseImageReady, { once: true });
     }
   }
-
-  stage.addEventListener(
-    'panzoomchange',
-    () => {
-      infoCard.reposition();
-    },
-    { passive: true }
-  );
 
   map.addEventListener('pointerdown', (event) => {
     if (!state.activeId) return;
@@ -90,6 +80,14 @@ function initialize() {
     }
     infoCard.close();
   });
+
+  map.addEventListener(
+    'scroll',
+    () => {
+      infoCard.reposition();
+    },
+    { passive: true }
+  );
 
   window.addEventListener(
     'resize',
@@ -104,11 +102,11 @@ function initialize() {
     if (['ArrowRight', 'ArrowDown'].includes(event.key)) {
       event.preventDefault();
       const next = getAdjacentEvent(1);
-      if (next) selectEvent(next.id, { focusHotspot: true });
+      if (next) selectEvent(next.id, { focusHotspot: true, scrollIntoView: true });
     } else if (['ArrowLeft', 'ArrowUp'].includes(event.key)) {
       event.preventDefault();
       const prev = getAdjacentEvent(-1);
-      if (prev) selectEvent(prev.id, { focusHotspot: true });
+      if (prev) selectEvent(prev.id, { focusHotspot: true, scrollIntoView: true });
     } else if (event.key === 'Escape') {
       infoCard.close();
     }
@@ -139,7 +137,9 @@ function initialize() {
       const mapElement = map instanceof HTMLElement ? map : null;
       if (!mapElement) return;
       const hasHorizontalOverflow = mapElement.scrollWidth > mapElement.clientWidth + 1;
-      if (!options.scrollIntoView && !hasHorizontalOverflow) {
+      const shouldEnsureVisible =
+        !!options.scrollIntoView || !isHotspotFullyVisible(mapElement, originButton);
+      if (!shouldEnsureVisible) {
         return;
       }
 
@@ -153,9 +153,11 @@ function initialize() {
             cardElement,
             behavior
           });
+          requestAnimationFrame(() => infoCard.reposition());
         });
       } else {
         originButton.scrollIntoView({ behavior, block: 'center', inline: 'center' });
+        requestAnimationFrame(() => infoCard.reposition());
       }
     }
   }
@@ -185,25 +187,19 @@ function initialize() {
 
     const mapRect = mapElement.getBoundingClientRect();
     const buttonRect = button.getBoundingClientRect();
-    const cardRect = cardElement.getBoundingClientRect();
+    const cardWidth = cardElement.offsetWidth || cardElement.getBoundingClientRect().width || 0;
 
     const buttonCenterWithinMap = buttonRect.left - mapRect.left + buttonRect.width / 2;
     const buttonCenterAbsolute = mapElement.scrollLeft + buttonCenterWithinMap;
 
-    const intersectsHorizontally =
-      cardRect.left < mapRect.right && cardRect.right > mapRect.left;
-    const intersectsVertically =
-      cardRect.top < mapRect.bottom && cardRect.bottom > mapRect.top;
-
-    let targetCenter = mapRect.width / 2;
-    if (intersectsHorizontally && intersectsVertically) {
-      const leftFree = Math.max(0, Math.min(cardRect.left, mapRect.right) - mapRect.left);
-      const effectiveWidth = Math.max(leftFree, mapRect.width * 0.2);
-      targetCenter = effectiveWidth / 2;
-    }
+    const padding = 16;
+    const reservedWidth = Math.min(cardWidth + padding * 2, mapElement.clientWidth);
+    const freeWidth = Math.max(mapElement.clientWidth - reservedWidth, 0);
+    const centerOffset =
+      freeWidth > 0 ? padding + freeWidth / 2 : mapElement.clientWidth / 2;
 
     const desiredScrollLeft = clamp(
-      buttonCenterAbsolute - targetCenter,
+      buttonCenterAbsolute - centerOffset,
       0,
       scrollableRange
     );
@@ -211,5 +207,16 @@ function initialize() {
     if (Math.abs(desiredScrollLeft - mapElement.scrollLeft) > 1) {
       mapElement.scrollTo({ left: desiredScrollLeft, behavior });
     }
+  }
+
+  function isHotspotFullyVisible(container, element) {
+    const containerRect = container.getBoundingClientRect();
+    const elementRect = element.getBoundingClientRect();
+    return (
+      elementRect.left >= containerRect.left &&
+      elementRect.right <= containerRect.right &&
+      elementRect.top >= containerRect.top &&
+      elementRect.bottom <= containerRect.bottom
+    );
   }
 }

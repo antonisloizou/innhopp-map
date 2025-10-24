@@ -3,9 +3,11 @@ import { formatDate, trapFocus } from './utils.js';
 /**
  * Create an info card controller attached to the card region.
  * @param {HTMLElement} region
- * @param {{ onClose?: (payload: { id: string; origin: HTMLElement | null }) => void }} options
+ * @param {{ onClose?: (payload: { id: string; origin: HTMLElement | null }) => void; mapElement?: HTMLElement }} options
  */
 export function createInfoCard(region, options = {}) {
+  const { onClose, mapElement: suppliedMapElement } = options;
+  const mapElement = suppliedMapElement instanceof HTMLElement ? suppliedMapElement : null;
   let currentId = null;
   let cleanupFocusTrap = null;
   let anchorButton = null;
@@ -45,6 +47,7 @@ export function createInfoCard(region, options = {}) {
   footer.append(groupChip, dateLabel);
   card.append(header, mediaContainer, details, footer);
   region.appendChild(card);
+  const positionDockedCard = positionDockedCardFactory(card, mapElement, () => anchorButton);
 
   closeButton.addEventListener('click', () => close());
 
@@ -81,7 +84,7 @@ export function createInfoCard(region, options = {}) {
     }
 
     requestAnimationFrame(() => {
-      positionCard(card, anchorButton);
+      reposition();
       const focusTarget = card.querySelector('button, a, [tabindex]:not([tabindex="-1"])');
       if (focusTarget instanceof HTMLElement) {
         focusTarget.focus({ preventScroll: true });
@@ -101,7 +104,12 @@ export function createInfoCard(region, options = {}) {
     anchorButton = null;
     cleanupFocusTrap?.();
     cleanupFocusTrap = null;
-    options.onClose?.({ id: closedId, origin });
+    card.style.left = 'auto';
+    card.style.top = 'auto';
+    card.style.right = '';
+    card.style.bottom = '';
+    card.style.transform = '';
+    onClose?.({ id: closedId, origin });
   }
 
   function shouldDock() {
@@ -134,8 +142,16 @@ export function createInfoCard(region, options = {}) {
 
   function reposition() {
     if (!currentId) return;
-    card.dataset.docked = shouldDock() ? 'true' : 'false';
-    positionCard(card, card.dataset.docked === 'true' ? null : anchorButton);
+    const docked = shouldDock();
+    card.dataset.docked = docked ? 'true' : 'false';
+    if (docked) {
+      positionDockedCard();
+      return;
+    }
+    card.style.transform = '';
+    card.style.bottom = '';
+    card.style.right = '';
+    positionCard(card, anchorButton);
   }
 
   return { open, close, getCurrentId, element: card, reposition };
@@ -157,6 +173,52 @@ function createMediaNode(media) {
   img.alt = media.alt || '';
   img.loading = 'lazy';
   return img;
+}
+
+function positionDockedCardFactory(card, mapElement, getAnchor) {
+  const padding = 16;
+  return function positionDockedCard() {
+    card.style.top = 'auto';
+    if (!(mapElement instanceof HTMLElement)) {
+      card.style.left = '50%';
+      card.style.transform = 'translateX(-50%)';
+      card.style.bottom = `${padding}px`;
+      return;
+    }
+    const cardWidth = card.offsetWidth || card.getBoundingClientRect().width;
+    const visibleWidth = mapElement.clientWidth;
+    const scrollLeft = mapElement.scrollLeft;
+    if (!cardWidth || !visibleWidth) {
+      card.style.left = `${scrollLeft + visibleWidth / 2}px`;
+      card.style.transform = 'translateX(-50%)';
+      card.style.bottom = `${padding}px`;
+      return;
+    }
+
+    const mapRect = mapElement.getBoundingClientRect();
+    const anchor = getAnchor?.() ?? null;
+
+    let desiredCenter = scrollLeft + visibleWidth / 2;
+    if (anchor instanceof HTMLElement) {
+      const anchorRect = anchor.getBoundingClientRect();
+      desiredCenter = scrollLeft + (anchorRect.left - mapRect.left) + anchorRect.width / 2;
+    }
+
+    const minCenter = scrollLeft + padding + cardWidth / 2;
+    const maxCenter = scrollLeft + visibleWidth - padding - cardWidth / 2;
+    if (minCenter > maxCenter) {
+      desiredCenter = scrollLeft + visibleWidth / 2;
+    } else {
+      desiredCenter = Math.min(Math.max(desiredCenter, minCenter), maxCenter);
+    }
+
+    const left = Math.round(desiredCenter - cardWidth / 2);
+
+    card.style.left = `${left}px`;
+    card.style.transform = 'none';
+    card.style.right = 'auto';
+    card.style.bottom = `${padding}px`;
+  };
 }
 
 function positionCard(card, origin) {
