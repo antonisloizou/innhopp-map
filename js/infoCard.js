@@ -178,46 +178,61 @@ function createMediaNode(media) {
 function positionDockedCardFactory(card, mapElement, getAnchor) {
   const padding = 16;
   return function positionDockedCard() {
-    card.style.top = 'auto';
+    card.style.bottom = 'auto';
     if (!(mapElement instanceof HTMLElement)) {
       card.style.left = '50%';
-      card.style.transform = 'translateX(-50%)';
-      card.style.bottom = `${padding}px`;
+      card.style.top = '50%';
+      card.style.transform = 'translate(-50%, -50%)';
       return;
     }
     const cardWidth = card.offsetWidth || card.getBoundingClientRect().width;
+    const cardHeight = card.offsetHeight || card.getBoundingClientRect().height;
     const visibleWidth = mapElement.clientWidth;
+    const visibleHeight = mapElement.clientHeight;
     const scrollLeft = mapElement.scrollLeft;
-    if (!cardWidth || !visibleWidth) {
+    const scrollTop = mapElement.scrollTop;
+    if (!cardWidth || !visibleWidth || !visibleHeight) {
       card.style.left = `${scrollLeft + visibleWidth / 2}px`;
-      card.style.transform = 'translateX(-50%)';
-      card.style.bottom = `${padding}px`;
+      card.style.top = `${scrollTop + visibleHeight / 2}px`;
+      card.style.transform = 'translate(-50%, -50%)';
       return;
     }
 
     const mapRect = mapElement.getBoundingClientRect();
     const anchor = getAnchor?.() ?? null;
 
-    let desiredCenter = scrollLeft + visibleWidth / 2;
+    let desiredCenterX = scrollLeft + visibleWidth / 2;
+    let desiredCenterY = scrollTop + visibleHeight / 2;
     if (anchor instanceof HTMLElement) {
       const anchorRect = anchor.getBoundingClientRect();
-      desiredCenter = scrollLeft + (anchorRect.left - mapRect.left) + anchorRect.width / 2;
+      desiredCenterX = scrollLeft + (anchorRect.left - mapRect.left) + anchorRect.width / 2;
+      desiredCenterY = scrollTop + (anchorRect.top - mapRect.top) + anchorRect.height / 2;
     }
 
-    const minCenter = scrollLeft + padding + cardWidth / 2;
-    const maxCenter = scrollLeft + visibleWidth - padding - cardWidth / 2;
-    if (minCenter > maxCenter) {
-      desiredCenter = scrollLeft + visibleWidth / 2;
+    const minCenterX = scrollLeft + padding + cardWidth / 2;
+    const maxCenterX = scrollLeft + visibleWidth - padding - cardWidth / 2;
+    if (minCenterX > maxCenterX) {
+      desiredCenterX = scrollLeft + visibleWidth / 2;
     } else {
-      desiredCenter = Math.min(Math.max(desiredCenter, minCenter), maxCenter);
+      desiredCenterX = Math.min(Math.max(desiredCenterX, minCenterX), maxCenterX);
     }
 
-    const left = Math.round(desiredCenter - cardWidth / 2);
+    const minCenterY = scrollTop + padding + cardHeight / 2;
+    const maxCenterY = scrollTop + visibleHeight - padding - cardHeight / 2;
+    if (minCenterY > maxCenterY) {
+      desiredCenterY = scrollTop + visibleHeight / 2;
+    } else {
+      desiredCenterY = Math.min(Math.max(desiredCenterY, minCenterY), maxCenterY);
+    }
+
+    const left = Math.round(desiredCenterX - cardWidth / 2);
+    const top = Math.round(desiredCenterY - cardHeight / 2);
 
     card.style.left = `${left}px`;
+    card.style.top = `${top}px`;
     card.style.transform = 'none';
     card.style.right = 'auto';
-    card.style.bottom = `${padding}px`;
+    card.style.bottom = 'auto';
   };
 }
 
